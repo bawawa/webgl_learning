@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div id="container">
+        <canvas id="canvas"></canvas>
+    </div>
+</body>
+<script>
+    let vertexShaderSource = `
+        attribute vec4 a_position;
+        void main(){
+            gl_Position = a_position;
+        }
+    `
+    let fragmentShaderSource = `
+        precision mediump float;
+        void main(){
+            gl_FragColor = vec4(1.0,0.0,0.0,1.0);
+        }
+    `
+    window.onload = function (){
+        let width  = window.innerWidth;
+        let height = window.innerHeight;
+        let canvas = document.getElementById("canvas")
+        canvas.width = width;
+        canvas.height = height;
+        let gl = canvas.getContext("webgl");
+        let programme,vertexShader,fragmentShader;
+        vertexShader = createShader(gl, vertexShaderSource, gl.VERTEX_SHADER);
+        fragmentShader = createShader(gl, fragmentShaderSource, gl.FRAGMENT_SHADER);
+        programme = createProgramme(gl, vertexShader, fragmentShader);
+        let positionAttributeLocation = gl.getAttribLocation(programme, "a_position");
+        console.log(positionAttributeLocation)
+        let positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER,positionBuffer);
+        let positions = [
+            -0.5, 0,
+            0.5, 0.5,
+            0.5, 0,
+        ];
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
+        gl.viewport(0,0, gl.canvas.width, gl.canvas.height);
+        gl.clearColor(0,0,0,0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.useProgram(programme);
+        gl.enableVertexAttribArray(positionAttributeLocation);
+        let size = 2;//指定每个顶点属性的组成数量，必须是1，2，3或4。
+        let type = gl.FLOAT;
+        let normalize = false;
+        let stride = 0;
+        let offset = 0;
+        gl.vertexAttribPointer(positionAttributeLocation,size,type,normalize,stride,offset);
+
+
+        let primitiveType = gl.TRIANGLES;
+        let first = 0;
+        let count = 3;
+        gl.drawArrays(primitiveType,first, count);
+    }
+
+    createShader = function (gl, source,type){
+        let shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        let success = gl.getShaderParameter(shader,gl.COMPILE_STATUS);
+        if(success){
+            return shader;
+        }
+        console.log(type+"compile failed,reason:"+gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+    }
+
+    createProgramme = function (gl, vertex, fragment){
+        let programme = gl.createProgram();
+        gl.attachShader(programme, vertex);
+        gl.attachShader(programme, fragment);
+        gl.linkProgram(programme);
+        let success = gl.getProgramParameter(programme, gl.LINK_STATUS);
+        if(success){
+            return programme
+        }
+        console.log("programme link failed,reason:"+gl.getProgramInfoLog(programme));
+        gl.deleteProgram(programme);
+    }
+</script>
+</html>
